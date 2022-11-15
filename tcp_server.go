@@ -19,6 +19,7 @@ func (srv *tcpServer) run() {
 		log.Errorln(err)
 		return
 	}
+	log.Printf("listening %s", srv.addr)
 	defer l.Close()
 
 	for {
