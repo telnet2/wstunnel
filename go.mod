@@ -1,6 +1,6 @@
-module github.com/fangdingjun/wstunnel
+module github.com/telnet2/wstunnel
 
-go 1.13
+go 1.18
 
 require (
 	github.com/fangdingjun/go-log/v5 v5.0.0
