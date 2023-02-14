@@ -15,11 +15,13 @@ func main() {
 		remoteAddr, localAddr string
 		daemon                bool
 		logFile               string
+		identityFile          string
 	)
 
 	flag.StringVar(&remoteAddr, "r", "", "remote WS url")
 	flag.StringVar(&localAddr, "l", "tcp://127.0.0.1:60060", "listening address (e.g., tcp://127.0.0.1:60060)")
 	flag.StringVar(&logFile, "log_file", "./wstunnel.log", "log file")
+	flag.StringVar(&identityFile, "i", "", "SSH identity file")
 	flag.BoolVar(&daemon, "daemon", false, "run as a daemon mode")
 	flag.Parse()
 
@@ -44,9 +46,13 @@ func main() {
 		signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 		<-ch
 	} else {
-		err := connect(remoteAddr, flag.Args())
+		args := flag.Args()
+		if identityFile != "" {
+			args = append(args, "-i", identityFile)
+		}
+		err := connect(remoteAddr, args)
 		if err != nil {
-			fmt.Println("\n\n", logFile, ">>>>>>>>>>>>>>>")
+			fmt.Println("\n\n", logFile, ">>>>>>>>>>>>>>>", err)
 			lr, _ := os.Open(logFile)
 			_, _ = io.Copy(os.Stdout, lr)
 		}

@@ -1,7 +1,6 @@
 package term
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -51,8 +50,7 @@ func ExecSSH(args []string) error {
 	go func() { _, _ = io.Copy(ptyMaster, os.Stdin) }()
 	_, _ = io.Copy(os.Stdout, ptyMaster)
 
-	if c.ProcessState != nil && c.ProcessState.Success() {
-		return nil
-	}
-	return fmt.Errorf("process exited: %d", c.ProcessState.ExitCode())
+	// How to detect if the command exited normally?
+	err = c.Wait()
+	return err
 }
