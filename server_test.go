@@ -19,7 +19,7 @@ type testWSHandler struct{}
 func (ts *testWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Errorln(err)
+		log.Println(err)
 		http.Error(w, "", http.StatusBadRequest)
 		return
 	}
@@ -30,7 +30,7 @@ func (ts *testWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		typ, data, err := conn.ReadMessage()
 		if err != nil {
 			if !websocket.IsCloseError(err, 1006) {
-				log.Errorln(err)
+				log.Println(err)
 			}
 			return
 		}
@@ -42,14 +42,14 @@ func (ts *testWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func echoServerWS(addr string) {
 	srv := &http.Server{Addr: addr, Handler: &testWSHandler{}}
 	if err := srv.ListenAndServe(); err != nil {
-		log.Errorln(err)
+		log.Println(err)
 	}
 }
 
 func echoServer(addr string) {
 	l1, err := net.Listen("tcp", addr)
 	if err != nil {
-		log.Errorln(err)
+		log.Println(err)
 		return
 	}
 	defer l1.Close()
@@ -57,7 +57,7 @@ func echoServer(addr string) {
 	for {
 		c1, err := l1.Accept()
 		if err != nil {
-			log.Errorln(err)
+			log.Println(err)
 			return
 		}
 		go func(c net.Conn) {
@@ -67,7 +67,7 @@ func echoServer(addr string) {
 				n, err := c.Read(data)
 				if err != nil {
 					if err != io.EOF {
-						log.Errorln(err)
+						log.Println(err)
 					}
 					break
 				}
@@ -93,7 +93,7 @@ func _sendAndRecvTCP(addr string, msg string) string {
 	u, _ := url.Parse(addr)
 	c, err := net.Dial("tcp", u.Host)
 	if err != nil {
-		log.Errorln(err)
+		log.Println(err)
 		return ""
 	}
 
@@ -101,14 +101,14 @@ func _sendAndRecvTCP(addr string, msg string) string {
 
 	_, err = c.Write([]byte(msg))
 	if err != nil {
-		log.Errorln(err)
+		log.Println(err)
 		return ""
 	}
 
 	data := make([]byte, 100)
 	n, err := c.Read(data)
 	if err != nil {
-		log.Errorln(err)
+		log.Println(err)
 		return ""
 	}
 	return string(data[:n])
@@ -117,7 +117,7 @@ func _sendAndRecvTCP(addr string, msg string) string {
 func _sendAndRecvWS(addr string, msg string) string {
 	c1, resp, err := dialer.Dial(addr, nil)
 	if err != nil {
-		log.Errorln(err)
+		log.Println(err)
 		return ""
 	}
 	resp.Body.Close()
@@ -131,13 +131,13 @@ func _sendAndRecvWS(addr string, msg string) string {
 
 	err = c1.WriteMessage(websocket.BinaryMessage, []byte(msg))
 	if err != nil {
-		log.Errorln(err)
+		log.Println(err)
 		return ""
 	}
 
 	_, d, err := c1.ReadMessage()
 	if err != nil {
-		log.Errorln(err)
+		log.Println(err)
 		return ""
 	}
 	return string(d)

@@ -1,12 +1,15 @@
 package main
 
 import (
+	"errors"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
-
-	log "github.com/fangdingjun/go-log/v5"
+	"sync"
 )
+
+type tcpHandler func(*net.TCPAddr) error
 
 type tcpServer struct {
 	addr   string
@@ -16,20 +19,47 @@ type tcpServer struct {
 func (srv *tcpServer) run() {
 	l, err := net.Listen("tcp", srv.addr)
 	if err != nil {
-		log.Errorln(err)
+		log.Println(err)
 		return
 	}
-	log.Printf("listening %s", srv.addr)
+	log.Printf("listening %s\n", l.Addr().String())
 	defer l.Close()
 
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			log.Error(err)
+			log.Println(err)
 			return
 		}
 		go srv.serve(conn)
 	}
+}
+
+// connect creates a client to handle an incoming connection.
+func (srv *tcpServer) connect(handle tcpHandler) error {
+	l, err := net.Listen("tcp", srv.addr)
+	if err != nil {
+		return err
+	}
+	if handle == nil {
+		return errors.New("handle function should not be nil")
+	}
+	defer l.Close()
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		wg.Done()
+		conn, err := l.Accept()
+		if err != nil {
+			log.Fatalf("accept error: %v", err)
+		}
+		srv.serve(conn)
+	}()
+	wg.Wait()
+
+	tcpAddr, _ := l.Addr().(*net.TCPAddr)
+	return handle(tcpAddr)
 }
 
 func (srv *tcpServer) serve(c net.Conn) {
@@ -37,21 +67,17 @@ func (srv *tcpServer) serve(c net.Conn) {
 
 	u, _ := url.Parse(srv.remote)
 
-	log.Debugf("connected from %s, forward to %s", c.RemoteAddr(), srv.remote)
-
-	defer func() {
-		log.Debugf("from %s, finished", c.RemoteAddr())
-	}()
+	log.Printf("connected %s => %s\n", c.RemoteAddr(), srv.remote)
 
 	if u.Scheme == "ws" || u.Scheme == "wss" {
 		conn1, resp, err := dialer.Dial(srv.remote, nil)
 		if err != nil {
-			log.Errorln(err)
+			log.Printf("websocket dial error: %v %s", err, resp.Status)
 			return
 		}
 		resp.Body.Close()
 		if resp.StatusCode != http.StatusSwitchingProtocols {
-			log.Errorf("dial remote ws %d", resp.StatusCode)
+			log.Printf("unexpected HTTP status code: %d\n", resp.StatusCode)
 			return
 		}
 		defer conn1.Close()
@@ -63,7 +89,7 @@ func (srv *tcpServer) serve(c net.Conn) {
 	if u.Scheme == "tcp" {
 		conn1, err := net.Dial("tcp", u.Host)
 		if err != nil {
-			log.Errorln(err)
+			log.Println(err)
 			return
 		}
 		defer conn1.Close()
@@ -72,5 +98,5 @@ func (srv *tcpServer) serve(c net.Conn) {
 		return
 	}
 
-	log.Errorf("unsupported scheme %s", u.Scheme)
+	log.Printf("unsupported scheme %s\n", u.Scheme)
 }

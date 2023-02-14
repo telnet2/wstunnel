@@ -1,3 +1,5 @@
+github.com/creack/pty v1.1.18 h1:n56/Zwd5o6whRC5PMGretI4IdRLlmBXYNjScPaBgsbY=
+github.com/creack/pty v1.1.18/go.mod h1:MOBLtS5ELjhRRrroQr9kyvTxUAFNvYEK993ew/Vr4O4=
 github.com/fangdingjun/go-log/v5 v5.0.0 h1:vdh9Bk9C4ZFL6KoO6rII73zQIyaLf7hFdBvucO/ckiE=
 github.com/fangdingjun/go-log/v5 v5.0.0/go.mod h1:V012Oxo0/pSbccX4OFSp9MJglXwNsZo2ByBBorr7zzM=
 github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWmnc=

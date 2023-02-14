@@ -31,7 +31,7 @@ type wsServer struct {
 
 func (wss *wsServer) run() {
 	if err := http.ListenAndServe(wss.addr, wss); err != nil {
-		log.Errorln(err)
+		log.Println(err)
 	}
 }
 
@@ -64,7 +64,7 @@ func (wss *wsServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Errorln(err)
+		log.Println(err)
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
@@ -75,7 +75,7 @@ func (wss *wsServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if u.Scheme == "ws" || u.Scheme == "wss" {
 		conn1, resp, err := dialer.Dial(remote, nil)
 		if err != nil {
-			log.Errorln(err)
+			log.Println(err)
 			return
 		}
 		resp.Body.Close()
@@ -92,7 +92,7 @@ func (wss *wsServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if u.Scheme == "tcp" {
 		conn1, err := net.Dial("tcp", u.Host)
 		if err != nil {
-			log.Errorln(err)
+			log.Println(err)
 			return
 		}
 		defer conn1.Close()

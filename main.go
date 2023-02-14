@@ -2,40 +2,53 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"io"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
-
-	log "github.com/fangdingjun/go-log/v5"
 )
 
 func main() {
-	var loglevel string
-	var remoteAddr, localAddr string
+	var (
+		remoteAddr, localAddr string
+		daemon                bool
+		logFile               string
+	)
 
 	flag.StringVar(&remoteAddr, "r", "", "remote WS url")
 	flag.StringVar(&localAddr, "l", "tcp://127.0.0.1:60060", "listening address (e.g., tcp://127.0.0.1:60060)")
-	flag.StringVar(&loglevel, "log_level", "INFO", "log level")
+	flag.StringVar(&logFile, "log_file", "./wstunnel.log", "log file")
+	flag.BoolVar(&daemon, "daemon", false, "run as a daemon mode")
 	flag.Parse()
 
 	if remoteAddr == "" {
 		log.Fatalf("-r remoteAddr is missing")
 	}
 
-	cfg := conf{
-		ProxyConfig: []proxyItem{{Listen: localAddr, Remote: remoteAddr}},
+	lw, err := os.Create(logFile)
+	if err != nil {
+		log.Fatalln(err)
 	}
+	log.SetOutput(lw)
 
-	if lv, err := log.ParseLevel(loglevel); err == nil {
-		log.Default.Level = lv
-	}
+	if daemon {
+		cfg := conf{
+			ProxyConfig: []proxyItem{{Listen: localAddr, Remote: remoteAddr}},
+		}
 
-	makeServers(cfg)
+		makeServers(cfg)
 
-	ch := make(chan os.Signal, 2)
-	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
-	select {
-	case s := <-ch:
-		log.Printf("received signal %s, exit.", s)
+		ch := make(chan os.Signal, 2)
+		signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+		<-ch
+	} else {
+		err := connect(remoteAddr, flag.Args())
+		if err != nil {
+			fmt.Println("\n\n", logFile, ">>>>>>>>>>>>>>>")
+			lr, _ := os.Open(logFile)
+			_, _ = io.Copy(os.Stdout, lr)
+		}
 	}
 }
