@@ -71,8 +71,8 @@ func (srv *tcpServer) serve(c net.Conn) {
 
 	if u.Scheme == "ws" || u.Scheme == "wss" {
 		conn1, resp, err := dialer.Dial(srv.remote, nil)
-		if err != nil {
-			log.Printf("websocket dial error: %v %s", err, resp.Status)
+		if err != nil || resp == nil || conn1 == nil {
+			log.Printf("websocket dial error: %v", err)
 			return
 		}
 		resp.Body.Close()
